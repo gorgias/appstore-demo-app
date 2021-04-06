@@ -11,9 +11,9 @@ from flask import Flask, abort, current_app, jsonify, redirect, request, session
 
 
 # Client (app) settings: take these details from the Developer Portal after publishing the app.
-APP_NAME = "External Python app 3"
+APP_NAME = "External Python app"
 CLIENT_ID = "606ab761b622322e9fb088a2"
-CLIENT_SECRET = "this-is-a-random-app-secret"
+CLIENT_SECRET = os.getenv("CLIENT_SECRET", "this-is-a-random-app-secret")
 
 # Other OAuth2 settings.
 GORGIAS_DOMAIN = os.getenv("GORGIAS_DOMAIN", "gorgias.com")
@@ -90,7 +90,10 @@ def oauth_callback():
         abort(403, exc)
 
     # This isn't safe, the refresh token should never leave the back-end except when is sent to the Auth server.
+    #  (cache it in a database instead)
     session["refresh_token"] = token["refresh_token"]
+    # Be careful, the access token is a pretty long JWT which might exceed the cookie capacity.
+    session["access_token"] = token["access_token"]
     next_url = url_for("list_tickets", account=account)
     return redirect(next_url)
 
@@ -101,9 +104,22 @@ def list_tickets():
     if not account:
         abort(400, "missing 'account' query parameter (where the installation was triggered)")
 
-    refresh_token = session["refresh_token"]
-    access_token = get_access_token(refresh_token, account=account, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
     api_url = get_api_base_url(account)
-    resp = requests.get(f"{api_url}/tickets", headers={"Authorization": f"Bearer {access_token}"})
-    resp.raise_for_status()
-    return jsonify(resp.json())
+    access_token = request.args.get("token", session.get("access_token", ""))  # testing purposes
+    while True:
+        try:
+            resp = requests.get(f"{api_url}/tickets", headers={"Authorization": f"Bearer {access_token}"})
+            resp.raise_for_status()
+        except requests.HTTPError as exc:
+            current_app.logger.exception(exc)
+            # Usually token expired, let's get a new one using the currently available refresh token. If still doesn't
+            #  work, go to `/oauth/login` for restarting the flow. (or simply reinstall the app)
+            refresh_token = session.get("refresh_token", "N/A")
+            try:
+                access_token = get_access_token(
+                    refresh_token, account=account, client_id=CLIENT_ID, client_secret=CLIENT_SECRET
+                )
+            except OAuthError:
+                abort(401, "can't refresh token, most probably the app isn't installed")
+        else:
+            return jsonify(resp.json())
