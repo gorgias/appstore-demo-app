@@ -12,12 +12,12 @@ from flask import Flask, abort, current_app, jsonify, redirect, request, session
 
 # Client (app) settings: take these details from the Developer Portal after publishing the app.
 APP_NAME = "External Python app"
-CLIENT_ID = "606ab761b622322e9fb088a2"
+CLIENT_ID = os.getenv("CLIENT_ID", "606ab761b622322e9fb088a2")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET", "this-is-a-random-app-secret")
 
 # Other OAuth2 settings.
 GORGIAS_DOMAIN = os.getenv("GORGIAS_DOMAIN", "gorgias.com")
-GORGIAS_DEV_BASE_URL = os.getenv("GORGIAS_DEV_BASE_URL", f"http://acme-cmin.ngrok.io")
+GORGIAS_DEV_BASE_URL = os.getenv("GORGIAS_DEV_BASE_URL", f"https://acme-cmin.ngrok.io")
 SCOPE = "openid email profile offline write:all"
 
 app = Flask(__name__)
@@ -113,7 +113,7 @@ def list_tickets():
         except requests.HTTPError as exc:
             current_app.logger.exception(exc)
             # Usually token expired, let's get a new one using the currently available refresh token. If still doesn't
-            #  work, go to `/oauth/login` for restarting the flow. (or simply reinstall the app)
+            #  work, go to `/oauth/login` for restarting the flow. (or simply reinstall the app in Gorgias)
             refresh_token = session.get("refresh_token", "N/A")
             try:
                 access_token = get_access_token(
