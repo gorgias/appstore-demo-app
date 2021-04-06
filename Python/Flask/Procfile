@@ -1,1 +1,1 @@
-web: gunicorn app:app
+web: gunicorn -e FLASK_ENV=development app:app
