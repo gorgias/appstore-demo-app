@@ -58,7 +58,7 @@ def get_access_token(refresh_token: str, *, account: str, client_id: str, client
     oauth2_base_url = get_oauth2_base_url(account)
     access_token_url = f"{oauth2_base_url}/token"
     resp = session.refresh_token(access_token_url, refresh_token=refresh_token)
-    app.logger.info("Access token refreshed for client %r.", client_id)
+    current_app.logger.info("Access token refreshed for client %r.", client_id)
     return resp["access_token"]
 
 
@@ -105,7 +105,7 @@ def list_tickets():
         abort(400, "missing 'account' query parameter (where the installation was triggered)")
 
     api_url = get_api_base_url(account)
-    access_token = request.args.get("token", session.get("access_token", ""))  # testing purposes
+    access_token = session["access_token"] = request.args.get("token", session.get("access_token", ""))  # testing purposes
     while True:
         try:
             resp = requests.get(f"{api_url}/tickets", headers={"Authorization": f"Bearer {access_token}"})
@@ -116,7 +116,7 @@ def list_tickets():
             #  work, go to `/oauth/login` for restarting the flow. (or simply reinstall the app in Gorgias)
             refresh_token = session.get("refresh_token", "N/A")
             try:
-                access_token = get_access_token(
+                access_token = session["access_token"] = get_access_token(
                     refresh_token, account=account, client_id=CLIENT_ID, client_secret=CLIENT_SECRET
                 )
             except OAuthError:
