@@ -11,9 +11,9 @@ from flask import Flask, abort, current_app, jsonify, redirect, request, session
 
 
 # Client (app) settings: take these details from the Developer Portal after publishing the app.
-APP_NAME = "External Python app"
-CLIENT_ID = os.getenv("CLIENT_ID", "606ab761b622322e9fb088a2")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET", "this-is-a-random-app-secret")
+APP_NAME = "Python Flask - Cosmin Local"
+CLIENT_ID = os.getenv("CLIENT_ID", "606d8961c9809e208baf1835")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET", "python-flask-cosmin-local")
 
 # Other OAuth2 settings.
 GORGIAS_DOMAIN = os.getenv("GORGIAS_DOMAIN", "gorgias.com")
