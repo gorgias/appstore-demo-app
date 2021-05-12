@@ -65,4 +65,4 @@ You'll get a JSON response containing the `access_token` and `refresh_token`.
 
 - issuing new access tokens
 - revoking the refresh token
-- caveats: tokens expiring time, install/uninstall, JWT etc.
+- caveats: tokens expiring time, install/uninstall, JWT, PKCE, enabled-accounts (test-cosmin) etc.
