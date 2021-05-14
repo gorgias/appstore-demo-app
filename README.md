@@ -23,24 +23,24 @@ which is mainly composed of two steps:
 
 Before triggering the flow, the app has to be set-upped for OAuth2 on our end. For achieving this you simply need to
 click **Install** over the app you wish to install, found among the ones available for you under the
-[App Store](https://gorgias.gorgias.com/app/apps).
+[App Store](https://sfbicycles.gorgias.com/app/apps).
 
 Clicking the **Install** button will ensure two things:
 
 1. The app is fully updated and prepared for the flow on our end.
-2. The initialization finalizes with a redirect into the _App URL_ you provided during the app creation in the
+2. The app initialization finalizes with a redirect into the _App URL_ you provided during the app creation in the
    [Developer Portal](https://gorgias-portal.openchannel.site/app/create).
    
-Keep in mind that the _App URL_ field needs to contain `{gorgias_account}` (in path or as query parameter), so you know
-where to authorize it and further do API requests. (as the very same app can be installed in multiple accounts)
+Keep in mind that the _App URL_ field needs to contain `{gorgias_account}` (in path or as a query parameter), so you
+know where to authorize it and further do API requests. (as the very same app can be installed in multiple accounts)
 
 Example of _App URL_: `https://your-app-back-end.com/install?account={gorgias_account}` (Gorgias will redirect here
 when you press **Install** -- which translates into something like
 `GET https://sfbicycles.gorgias.com/app/apps/60925f8fe90ded5e265acdf1?install=true` ->
 `GET https://your-app-back-end.com/install?account=sfbicycles`)
 
-After this is configured, and the route available in your back-end, you can continue with the flow as described
-below.
+After this is configured in the Portal, and the route available in your back-end, you can continue with the flow as
+described below.
 
 
 ### App authorization
@@ -58,19 +58,24 @@ state=XZXZV2dXvFudpo8HTaL7cPwGJxr4XS&\
 nonce=0327tRehleepX9gcgA7O"
 ```
 
+`<user>:<password>` means you have to be authenticated before authorizing the app. 
+
 ###### Parameters
 
 - `client_id`: The same as the app ID.
-- `scope`: Permissions the app require for completing the flow. (displayed in the authorization page -- for now the app
+- `scope`: Permissions the app require for completing the flow. (confirmed in the authorization page -- for now the app
   gets access to all resources available to the user authorizing it)
+    - `openid`, `email`, `profile`: populates the ID token with user info
+    - `offline`: enables access token refreshing
+    - `write:all`: write access into all resources
 - `redirect_uri`: Where to redirect (on the app's back-end) after the app is authorized in order to get the tokens.
   Make sure to have this URL among your _Redirect URLs_ configured in the Portal.
 - `state`: Random string, protecting against CSRF attacks.
 - `nonce`: Random string, binds it with the token, so we identify the original request that issued it.
 
 A permissions consent screen will be displayed and if you accept them you'll be redirected into the `redirect_uri` with
-a `code` parameter and the very same `state` you provided. Thus you can verify if the request coming here was
-originally triggered by you.
+a `code` parameter and the very same `state` you provided. Through `state` you can verify if the request coming here
+was  originally triggered by you.
 
 ```bash
 HTTP/1.1 302 FOUND
@@ -78,9 +83,6 @@ Content-Type: text/html; charset=utf-8
 Date: Wed, 12 May 2021 19:08:59 GMT
 Location: https://gorgias-app-flask-cosmin.herokuapp.com/oauth/callback?account=sfbicycles&code=ruu5ebEeAcdxSYrbR7T65xpFhA6fo99O98xX9wlRhqnFehj6&state=XZXZV2dXvFudpo8HTaL7cPwGJxr4XS
 Server: nginx/1.14.0
-X-Flaskwork-Url: http://acme.gorgias.docker/__flaskwork/1c36a7ad-7e57-4213-acc0-0cfd75b952b6
-X-Flaskwork-Uuid: 1c36a7ad-7e57-4213-acc0-0cfd75b952b6
-X-Frame-Options: Deny
 Content-Length: 0
 ```
 
@@ -96,6 +98,11 @@ curl -u 60925f8fe90ded5e265acdf1:cosmin-remote-demo -X POST https://sfbicycles.g
   -d redirect_uri="https://gorgias-app-flask-cosmin.herokuapp.com/oauth/callback?account=sfbicycles" \
   -d code=ruu5ebEeAcdxSYrbR7T65xpFhA6fo99O98xX9wlRhqnFehj6
 ```
+
+App credentials are simply `<client_id>:<client_secret>`.
+
+- `client_id`: The same as the app ID.
+- `client_secret`: Generated in the Developer Portal.
 
 ###### Parameters
 
